@@ -8,6 +8,7 @@
 // @match        *://arras.netlify.app/*
 // @run-at       document-end
 // @grant        GM_addStyle
+// @grant        unsafeWindow
 // ==/UserScript==
 
 // Avoid clashing with other scripts or the game itself
@@ -15,17 +16,23 @@ var htmlCssPrefix = 'Road_SMKA_';
 // class added when key/button is pressed
 var activeClassName = `${htmlCssPrefix}active`;
 // chars to listen to on mouse or key press (0 = left mouse, 2 = right mouse)
-var charsToWatch = "02wasd";
+// keep in this order to simplify layout stuff later
+var charsToWatch = "0w2asd";
 
 (function main() {
-    var checkIfGameWindowExistsInterval = setInterval(() => {
+    var checkIfInGameInterval = setInterval(() => {
+
+        // themeColor only gains a value once in-game
+        // this only works with unsafeWindow not window and idc enough to figure out a better way to do this
+        if (unsafeWindow?.Arras?.()?.themeColor === undefined) return;
+
         // select the game iframe's inner contentWindow 
         var gameWindow = document.querySelector('#game')?.contentWindow;
         if (!gameWindow) return;
 
-        // only run main functions when in-game (inner contentWindow exists)
-        clearInterval(checkIfGameWindowExistsInterval);
-        buildVisual(gameWindow);
+        // only run main functions when in-game and when iframe's content window exists
+        clearInterval(checkIfInGameInterval);
+        buildVisual();
         addEventListeners(gameWindow);
 
     }, 1*1000);
@@ -36,8 +43,9 @@ function getCharHtmlElemId(char) {
     return `${htmlCssPrefix}${char}`;
 }
 
-function buildVisual(gameIframeContentWindow) {
+function buildVisual() {
     var containerId = `${htmlCssPrefix}container`;
+    var canvasId = `canvas`;
 
     var visualHtml = `<div id="${containerId}">`;
     for (var char of charsToWatch) {
@@ -48,31 +56,18 @@ function buildVisual(gameIframeContentWindow) {
     visualHtml += `</div>`
 
     // getting overlay to work based on this - https://stackoverflow.com/a/26793302
-    var canvas = document.getElementById('canvas');
+    var canvas = document.getElementById(canvasId);
     canvas.insertAdjacentHTML('afterend', visualHtml);
-    // IMPORTANT i didnt realize theres a 2nd canvas within the iframe where stuff actually happens
+
     GM_addStyle(`
+        /* Overlay visual over game like so - https://stackoverflow.com/a/26793302 */
+        .gameAreaWrapper { position: relative; }
+        #${canvasId}, #${containerId} { position: absolute; }
 
-        #canvas {
-            position: absolute;
-            z-index: 1;
-        }
-
-        ${containerId} {
-            /* Make it hover above canvas */
-            position: absolute;
-            z-index: 3;
-
-            background-color: transparent;
-
+        /* Layout as 2 rows of 3 */
+        #${containerId} {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-column-gap: 10px;
-            grid-row-gap: 10px;
-        }
-
-        ${containerId} * {
-            
+            grid-template-columns: auto auto auto;
         }
     `);
 }
