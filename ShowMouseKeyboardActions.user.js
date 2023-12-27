@@ -1,11 +1,13 @@
 // ==UserScript==
 // @name         Show_Mouse_Keyboard_Actions
-// @namespace    http://tampermonkey.net/
-// @version      2023-12-27-1533
+// @namespace    https://github.com/Road6943/ShowMouseKeyboardActions
+// @version      2023-12-27-1606
 // @description  Show your mouse/keyboard actions on-screen. Useful for streaming/yt vids.
 // @author       Road
 // @match        *://arras.io/*
+// @match        *://arrax.io/*
 // @match        *://arras.netlify.app/*
+// @match        *://sites.google.com/view/arras-io/*
 // @run-at       document-end
 // @grant        GM_addStyle
 // @grant        unsafeWindow
@@ -79,6 +81,10 @@ function buildVisual() {
             margin: 10px;
             width: 180px;
             height: 120px;
+
+            /* Position container on screen, make this the last stuff within block
+            *    so that it overrides all the other css commands */
+            bottom: 10px; 
         }
 
         /* Make key/mouse cells look nice */
@@ -175,7 +181,7 @@ function toggleVisual(identifier, makeActive, isMouse=false) {
         
         if (makeActive) {
             // to activate, change one elem's bg color
-            elem.style.backgroundColor = getColor('guiwhite'); // in-game text color
+            elem.style.backgroundColor = newBorderColor;
         } else {
             // to un-activate, make the bg default again
             elem.style.backgroundColor = defaultVisualBgColor;
